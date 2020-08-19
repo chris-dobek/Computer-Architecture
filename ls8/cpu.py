@@ -77,19 +77,24 @@ class CPU:
             instruction = self.ram_read(self.pc)
             reg_a = self.ram_read(self.pc + 1)
             reg_b = self.ram_read(self.pc + 2)
+
             if instruction == HLT:
                 running = False
                 self.pc += 1
                 sys.exit()
+
             elif instruction == MUL:
                 print(self.reg[reg_a] * self.reg[reg_b])
                 self.pc += 3
+
             elif instruction == PRN:
                 print(self.reg[reg_a])
                 self.pc += 2
+
             elif instruction == LDI:
                 self.reg[reg_a] = reg_b
                 self.pc += 3
+                
             else:
                 print(f'this instruction is not valid: {hex(instruction)}')
                 running = False
