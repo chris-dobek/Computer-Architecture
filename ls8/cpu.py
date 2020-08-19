@@ -13,23 +13,45 @@ class CPU:
     def load(self):
         """Load a program into memory."""
 
+        if len(sys.argv) < 2:
+            print("Insufficient arguments, re-evaluate and try again")
+            print("Usage: filename file_to_open")
+
         address = 0
 
         # For now, we've just hardcoded a program:
+        try:
+            with open(sys.argv[1]) as file:
+                for line in file:
+                    comment_split = line.split('#')
+                    potential_num = comment_split[0]
 
-        program = [
+                    if potential_num == "":
+                        continue
+
+                    if potential_num[0] == "1" or potential_num[0] == "0":
+                        num = potential_num[:8]
+
+                        self.ram[address] = int(num, 2)
+                        address += 1
+
+        except FileNotFoundError:
+            print(f"{sys.argv[0]}: {sys.argv[1]} not found")
+
+        #program = [
             # From print8.ls8
-            0b10000010, # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111, # PRN R0
-            0b00000000,
-            0b00000001, # HLT
-        ]
+            #0b10000010, # LDI R0,8
+            #0b00000000,
+            #0b00001000,
+            #0b01000111, # PRN R0
+            #0b00000000,
+            #0b00000001, # HLT
+        #]
+    
 
-        for instruction in program:
-            self.ram[address] = instruction
-            address += 1
+        # for instruction in program:
+          #  self.ram[address] = instruction
+           # address += 1
     
     def ram_read(self, mar):
          return self.ram[mar]
