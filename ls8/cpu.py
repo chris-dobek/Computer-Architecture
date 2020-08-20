@@ -10,48 +10,39 @@ class CPU:
         self.ram = [0] * 256
         self.pc = 0         
 
-    def load(self):
+    def load(self, filename = None):
         """Load a program into memory."""
-
-        if len(sys.argv) < 2:
-            print("Insufficient arguments, re-evaluate and try again")
-            print("Usage: filename file_to_open")
 
         address = 0
 
         # For now, we've just hardcoded a program:
-        try:
-            with open(sys.argv[1]) as file:
-                for line in file:
-                    comment_split = line.split('#')
-                    potential_num = comment_split[0]
-
-                    if potential_num == "":
+        if filename:
+            with open(sys.argv[1]) as f:
+                address = 0
+                for line in f:
+                    value = line.split("#")[0].strip()
+                    if value == "":
                         continue
 
-                    if potential_num[0] == "1" or potential_num[0] == "0":
-                        num = potential_num[:8]
-
-                        self.ram[address] = int(num, 2)
+                    else:
+                        instruction = int(line, 2)
+                        self.ram[address] = instruction
                         address += 1
 
-        except FileNotFoundError:
-            print(f"{sys.argv[0]}: {sys.argv[1]} not found")
+        
+        else:
+            program = [
+                # From print8.ls8
+                0b10000010,  # LDI R0,8
+                0b00000000,
+                0b00001000,
+                0b01000111,  # PRN R0
+                0b00000000,
+                0b00000001,  # HLT
+            ]
 
-        #program = [
-            # From print8.ls8
-            #0b10000010, # LDI R0,8
-            #0b00000000,
-            #0b00001000,
-            #0b01000111, # PRN R0
-            #0b00000000,
-            #0b00000001, # HLT
-        #]
-    
-
-        # for instruction in program:
-          #  self.ram[address] = instruction
-           # address += 1
+        for address, instruction in enumerate(program):
+            self.ram[address] = instruction
     
     def ram_read(self, mar):
          return self.ram[mar]
@@ -149,8 +140,19 @@ class CPU:
                 add = self.reg[reg_a] + self.reg[reg_b]
                 self.reg[reg_a] = add
                 self.pc += 3
+            
+            # CALL
+            elif instruction == CALL:
+                self.reg[SP] -= 1
+                self.ram_write(self.pc + 2, self.reg[SP])
+                self.pc = self.reg[reg_a]
+
+            # RET
+            elif instruction == RET:
+                self.pc = self.ram[self.reg[SP]]
+                self.reg[SP] += 1
                 
             else:
-                print(f'this instruction is not valid: {hex(instruction)}')
+                print(f'This instruction is not valid: {hex(instruction)}')
                 running = False
                 sys.exit()
