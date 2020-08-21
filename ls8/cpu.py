@@ -8,7 +8,10 @@ class CPU:
     def __init__(self):
         self.reg = [0] * 8
         self.ram = [0] * 256
-        self.pc = 0         
+        self.pc = 0    
+
+        # Flag
+        self.flag = 0b00000000   
 
     def load(self, filename = None):
         """Load a program into memory."""
@@ -44,18 +47,33 @@ class CPU:
         for address, instruction in enumerate(program):
             self.ram[address] = instruction
     
-    def ram_read(self, mar):
-         return self.ram[mar]
+    def ram_read(self, address):
+         return self.ram[address]
 
-    def ram_write(self, mar, mdr):
-        self.ram[mar] = mdr
+    def ram_write(self, value, address):
+        self.ram[address] = value
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        #elif op == "SUB": etc
+
+        elif op == "SUB":
+            self.reg[reg_a] -= self.reg[reg_b]
+
+        elif op == "MUL":
+            self.reg[reg_a] *= self.reg[reg_b]
+
+        elif op == "CMP":
+            if self.reg[reg_a] == self.reg[reg_b]:
+                self.flag = 0b00000001
+
+            elif self.reg[reg_a] > self.reg[reg_b]:
+                self.flag = 0b10000010
+
+            else:
+                self.flag = 0b00000100
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -92,28 +110,40 @@ class CPU:
         CALL = 0b01010000
         RET = 0b00010001
 
+        #Added for Sprint Challenge
+        CMP = 0b10100111
+        JMP = 0b01010100
+        JEQ = 0b01010101
+        JNE = 0b01010110
+        ########################
+
         SP = 7
 
         running = True
 
         while running:
-            instruction = self.ram_read(self.pc)
+            instruction = self.ram[self.pc]
+
             reg_a = self.ram_read(self.pc + 1)
             reg_b = self.ram_read(self.pc + 2)
 
+            # HLT
             if instruction == HLT:
                 running = False
                 self.pc += 1
                 sys.exit()
 
+            # MUL
             elif instruction == MUL:
                 print(self.reg[reg_a] * self.reg[reg_b])
                 self.pc += 3
 
+            # PRN
             elif instruction == PRN:
                 print(self.reg[reg_a])
                 self.pc += 2
 
+            # LDI
             elif instruction == LDI:
                 self.reg[reg_a] = reg_b
                 self.pc += 3
@@ -151,6 +181,37 @@ class CPU:
             elif instruction == RET:
                 self.pc = self.ram[self.reg[SP]]
                 self.reg[SP] += 1
+
+            
+            # Added for Sprint Challenge
+            
+            # CMP
+            elif instruction == CMP:
+                self.alu("CMP", reg_a, reg_b)
+                self.pc += 3
+
+            # JMP
+            elif instruction == JMP:
+                self.pc == self.reg[reg_a]
+                break
+
+            # JEQ
+            elif instruction == JEQ:
+                if (self.flag & HLT) == 1:
+                    self.pc = self.reg[reg_a]
+
+                else:
+                    self.pc += 2
+
+            # JNE
+            elif instruction == JNE:
+                if (self.flag & HLT) == 0:
+                    self.pc = self.reg[reg_a]
+
+                else:
+                    self.pc += 2
+            
+            ###############################
                 
             else:
                 print(f'This instruction is not valid: {hex(instruction)}')
